@@ -42,17 +42,22 @@ function toBase64(bytes: Uint8Array) {
 export async function GET(_req: NextRequest) {
   const steamid = "76561198835243757";
   const key = process.env.STEAM_WEB_API_KEY;
-  if (!key) return new Response("Missing STEAM_WEB_API_KEY", { status: 500 });
+  if (!key) {
+    return new Response("Missing STEAM_WEB_API_KEY", { status: 500 });
+  }
 
+  // Steam プロフィール取得
   const sumRes = await fetch(
     `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${key}&steamids=${steamid}`,
     { headers: { "user-agent": "steam-card" } }
   );
   const sumJson = await sumRes.json();
   const p: PlayerSummary | undefined = sumJson?.response?.players?.[0];
-  if (!p) return new Response("Steam profile not found", { status: 404 });
+  if (!p) {
+    return new Response("Steam profile not found", { status: 404 });
+  }
 
-  // avatar を data URI に埋め込み（GitHubで壊れにくい）
+  // アバターを base64 で埋め込み（GitHub対応）
   let avatarDataUri = "";
   try {
     const imgRes = await fetch(p.avatarfull, { headers: { "user-agent": "steam-card" } });
@@ -83,20 +88,15 @@ export async function GET(_req: NextRequest) {
   }
 
   <text x="120" y="46" fill="#e7f0ff" font-size="18" font-weight="700"
-        font-family="system-ui,-apple-system,Segoe UI,Roboto">
-    ${name}
-  </text>
+        font-family="system-ui,-apple-system,Segoe UI,Roboto">${name}</text>
 
   <circle cx="128" cy="66" r="5" fill="${dot}"/>
+
   <text x="140" y="70" fill="#c9d6e8" font-size="13"
-        font-family="system-ui,-apple-system,Segoe UI,Roboto">
-    ${status}
-  </text>
+        font-family="system-ui,-apple-system,Segoe UI,Roboto">${status}</text>
 
   <text x="500" y="24" fill="#7ea2c8" font-size="11" text-anchor="end"
-        font-family="system-ui,-apple-system,Segoe UI,Roboto">
-    STEAM
-  </text>
+        font-family="system-ui,-apple-system,Segoe UI,Roboto">STEAM</text>
 </svg>`;
 
   return new Response(svg, {
